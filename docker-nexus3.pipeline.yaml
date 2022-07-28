@@ -52,6 +52,8 @@ spec:
           value: 'false'
         - name: DOCKERFILE
           value: 'docker-nexus3/Dockerfile'
+        - name: CONTEXT
+          value: 'docker-nexus3'
       workspaces:
         - name: source
           workspace: my-workspace
