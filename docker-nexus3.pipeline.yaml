@@ -1,0 +1,130 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: docker-nexus3-pipeline
+spec:
+  description: >-
+    Pipeline to build and deploy Nexus from Dockerfile
+  params:
+    - name: deployment-name
+      type: string
+      description: Deployment name
+      default: docker-nexus3
+    - name: git-url
+      type: string
+      description: Git code repository
+      default: 'https://github.com/kevchu3/docker-nexus3-pipeline.git'
+    - name: git-revision
+      type: string
+      description: Git revision to use
+      default: main
+    - name: IMAGE
+      type: string
+      description: Fully qualified image to be built
+      default: 'image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/docker-nexus3:latest'
+  workspaces:
+    - name: my-workspace
+  tasks:
+    - name: git-clone
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      workspaces:
+        - name: output
+          workspace: my-workspace
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: subdirectory
+          value: ""
+        - name: revision
+          value: $(params.git-revision)
+        - name: deleteExisting
+          value: 'true'
+    - name: build-image
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE)
+        - name: TLSVERIFY
+          value: 'false'
+        - name: DOCKERFILE
+          value: 'docker-nexus3/Dockerfile'
+        - name: CONTEXT
+          value: 'docker-nexus3'
+      workspaces:
+        - name: source
+          workspace: my-workspace
+      runAfter:
+        - git-clone
+    - name: apply-manifests
+      taskRef:
+        name: apply-manifests
+      params:
+        - name: manifest_dir
+          value: yaml
+      workspaces:
+        - name: source
+          workspace: my-workspace
+      runAfter:
+        - build-image
+    - name: update-deployment
+      taskRef:
+        name: update-deployment
+      params:
+        - name: deployment
+          value: $(params.deployment-name)
+        - name: IMAGE
+          value: $(params.IMAGE)
+      runAfter:
+        - apply-manifests
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: apply-manifests
+spec:
+  workspaces:
+  - name: source
+  params:
+    - name: manifest_dir
+      description: The directory in source that contains yaml manifests
+      type: string
+      default: "k8s"
+  steps:
+    - name: apply
+      image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+      workingDir: /workspace/source
+      command: ["/bin/bash", "-c"]
+      args:
+        - |-
+          echo Applying manifests in $(inputs.params.manifest_dir) directory
+          oc apply -f $(inputs.params.manifest_dir)
+          echo -----------------------------------
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: update-deployment
+spec:
+  params:
+    - name: deployment
+      description: The name of the deployment patch the image
+      type: string
+    - name: IMAGE
+      description: Location of image to be patched with
+      type: string
+  steps:
+    - name: patch
+      image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+      command: ["/bin/bash", "-c"]
+      args:
+        - |-
+          oc patch deployment $(inputs.params.deployment) --patch='{"spec":{"template":{"spec":{
+            "containers":[{
+              "name": "$(inputs.params.deployment)",
+              "image":"$(inputs.params.IMAGE)"
+            }]
+          }}}}'

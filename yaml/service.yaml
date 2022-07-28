@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: docker-nexus3
+  name: docker-nexus3
+spec:
+  ports:
+  - name: 8081-tcp
+    port: 8081
+    protocol: TCP
+    targetPort: 8081
+  selector:
+    app: docker-nexus3
+  sessionAffinity: ClientIP
+  type: ClusterIP

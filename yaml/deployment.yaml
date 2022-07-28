@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-nexus3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docker-nexus3
+  template:
+    metadata:
+      labels:
+        app: docker-nexus3
+    spec:
+      containers:
+        - name: docker-nexus3
+          image: docker-nexus3:latest
+          ports:
+            - containerPort: 8080
+              protocol: "TCP"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 1
+              memory: 2Gi
+          volumeMounts:
+            - mountPath: /nexus-data
+              name: nexus
+      volumes:
+        - name: nexus
+          persistentVolumeClaim:
+            claimName: nexus-data
+  triggers:
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - docker-nexus3
+        from:
+          kind: ImageStreamTag
+          name: docker-nexus3:latest
