@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: docker-nexus-pipeline
+  namespace: openshift-gitops
+spec:
+  destination:
+    namespace: nexus
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: yaml
+    repoURL: https://github.com/kevchu3/docker-nexus3-pipeline.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

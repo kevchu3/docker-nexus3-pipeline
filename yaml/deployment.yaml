@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: docker-nexus3
-          image: docker-nexus3:latest
+          image: 'image-registry.openshift-image-registry.svc:5000/nexus/docker-nexus3:latest'
           ports:
             - containerPort: 8080
               protocol: "TCP"
@@ -32,12 +32,3 @@ spec:
         - name: nexus
           persistentVolumeClaim:
             claimName: nexus-data
-  triggers:
-    - type: ImageChange
-      imageChangeParams:
-        automatic: true
-        containerNames:
-          - docker-nexus3
-        from:
-          kind: ImageStreamTag
-          name: docker-nexus3:latest
