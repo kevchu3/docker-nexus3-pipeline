@@ -101,7 +101,7 @@ spec:
       args:
         - |-
           echo Applying manifests in $(inputs.params.manifest_dir) directory
-          oc apply -f $(inputs.params.manifest_dir)
+          oc apply -k $(inputs.params.manifest_dir)
           echo -----------------------------------
 ---
 apiVersion: tekton.dev/v1beta1
