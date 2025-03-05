@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
     app: docker-nexus3
-  name: docker-nexus3
+  name: nexus-web
 spec:
   ports:
   - name: 8081-tcp

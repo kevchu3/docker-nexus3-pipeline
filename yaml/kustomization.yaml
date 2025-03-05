@@ -5,5 +5,7 @@ resources:
   - deployment.yaml
   - imagestream.yaml
   - nexus-data.pvc.yaml
-  - service.yaml
-  - route.yaml
+  - service-nexus-registry.yaml
+  - service-nexus-web.yaml
+  - route-nexus-registry.yaml
+  - route-nexus-web.yaml
