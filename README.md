@@ -102,8 +102,8 @@ git push origin dev
 ## License
 GPLv3
 
-[OpenShift Pipelines]: [https://github.com/openshift/pipelines-tutorial/blob/master/install-operator.md](https://docs.redhat.com/en/documentation/red_hat_openshift_pipelines/1.17/html/installing_and_configuring/index)
-[OpenShift GitOps]: [https://docs.redhat.com/en/documentation/red_hat_openshift_gitops/1.15/html/installing_gitops/index]
+[OpenShift Pipelines]: https://docs.redhat.com/en/documentation/red_hat_openshift_pipelines/1.17/html/installing_and_configuring/index
+[OpenShift GitOps]: https://docs.redhat.com/en/documentation/red_hat_openshift_gitops/1.15/html/installing_gitops/index
 [pipelines-tutorial]: https://github.com/openshift/pipelines-tutorial
 [Docker repository connector]: https://support.sonatype.com/hc/en-us/articles/115013153887-Docker-Repository-Configuration-and-Client-Connection
 [Nexus alongside Apache Httpd in a VM]: https://github.com/kevchu3/nexus-docker-repo
