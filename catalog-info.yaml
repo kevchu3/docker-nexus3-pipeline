@@ -1,0 +1,20 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: nexus-repository
+  title: Nexus Repository
+  description: |
+    Sonatype Nexus Repository CE
+  annotations:
+    argocd/app-selector: app=docker-nexus3
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - repository
+  links:
+    - url: https://help.sonatype.com/en/ce-onboarding.html
+      title: "About Sonatype Nexus Repository Community Edition"
+      icon: web
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/admins

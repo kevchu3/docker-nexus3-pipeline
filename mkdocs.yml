@@ -1,0 +1,8 @@
+site_name: Sonatype Nexus Repository Community Edition
+site_description: Home
+
+nav:
+  - Overview: index.md
+
+plugins:
+  - techdocs-core

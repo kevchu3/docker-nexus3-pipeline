@@ -91,7 +91,7 @@ spec:
     runAfter:
     - apply-manifests
 ---
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Task
 metadata:
   name: apply-manifests
@@ -114,7 +114,7 @@ spec:
         oc apply -k $(inputs.params.manifest_dir)
         echo -----------------------------------
 ---
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Task
 metadata:
   name: update-deployment

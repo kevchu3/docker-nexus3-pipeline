@@ -1,11 +1,10 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: nexus-registry
-  namespace: nexus
   labels:
     app: docker-nexus3
     app.kubernetes.io/instance: docker-nexus-pipeline
+  name: nexus-registry
 spec:
   ports:
     - name: 5000-tcp

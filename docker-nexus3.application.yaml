@@ -1,6 +1,8 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  labels:
+    app: docker-nexus3
   name: docker-nexus-pipeline
   namespace: openshift-gitops
 spec:

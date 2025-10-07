@@ -81,13 +81,13 @@ git branch dev
 git checkout dev
 ```
 
-Update submodule to tagged version 3.77.2:
+Update submodule to tagged version 3.78.1:
 ```
 cd docker-nexus3
 git submodule init
 git submodule update
 git branch
-git checkout tags/3.77.2
+git checkout tags/3.78.1
 ```
 
 Commit to dev branch:
@@ -95,15 +95,15 @@ Commit to dev branch:
 cd ..
 git status
 git add docker-nexus3
-git commit -S -m "Git submodule update to docker-nexus3 v3.77.2-02"
+git commit -S -m "Git submodule update to docker-nexus3 v3.78.1-02"
 git push origin dev
 ```
 
 ## License
 GPLv3
 
-[OpenShift Pipelines]: https://docs.redhat.com/en/documentation/red_hat_openshift_pipelines/1.17/html/installing_and_configuring/index
-[OpenShift GitOps]: https://docs.redhat.com/en/documentation/red_hat_openshift_gitops/1.15/html/installing_gitops/index
+[OpenShift Pipelines]: https://docs.redhat.com/en/documentation/red_hat_openshift_pipelines/1.20/html/installing_and_configuring/index
+[OpenShift GitOps]: https://docs.redhat.com/en/documentation/red_hat_openshift_gitops/1.18/html/installing_gitops/index
 [pipelines-tutorial]: https://github.com/openshift/pipelines-tutorial
 [Docker repository connector]: https://support.sonatype.com/hc/en-us/articles/115013153887-Docker-Repository-Configuration-and-Client-Connection
 [Nexus alongside Apache Httpd in a VM]: https://github.com/kevchu3/nexus-docker-repo
