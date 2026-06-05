@@ -4,92 +4,150 @@ metadata:
   name: docker-nexus3-pipeline
 spec:
   params:
-  - name: deployment-name
-    type: string
-    description: Deployment name
-    default: docker-nexus3
-  - name: git-url
-    type: string
-    description: Git code repository
-    default: 'https://github.com/kevchu3/docker-nexus3-pipeline.git'
-  - name: git-revision
-    type: string
-    description: Git revision to use
-    default: main
-  - name: IMAGE
-    type: string
-    description: Fully qualified image to be built
-    default: 'image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/docker-nexus3:latest'
-  workspaces:
-  - name: my-workspace
+    - default: docker-nexus3
+      description: Deployment name
+      name: deployment-name
+      type: string
+    - default: 'https://github.com/kevchu3/docker-nexus3-pipeline.git'
+      description: Git code repository
+      name: git-url
+      type: string
+    - default: main
+      description: Git revision to use
+      name: git-revision
+      type: string
+    - default: 'image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/docker-nexus3:latest'
+      description: Fully qualified image to be built
+      name: IMAGE
+      type: string
   tasks:
-  - name: git-clone
-    taskRef:
-      resolver: cluster
+    - name: git-clone
       params:
-      - name: kind
-        value: task
-      - name: name
-        value: git-clone
-      - name: namespace
-        value: openshift-pipelines
-    workspaces:
-    - name: output
-      workspace: my-workspace
-    params:
-    - name: URL
-      value: $(params.git-url)
-    - name: SUBDIRECTORY
-      value: ""
-    - name: DELETE_EXISTING
-      value: "true"
-    - name: REVISION
-      value: $(params.git-revision)
-  - name: build-image
-    taskRef:
-      resolver: cluster
+        - name: URL
+          value: $(params.git-url)
+        - name: SUBDIRECTORY
+          value: ''
+        - name: DELETE_EXISTING
+          value: 'true'
+        - name: REVISION
+          value: $(params.git-revision)
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+      workspaces:
+        - name: output
+          workspace: my-workspace
+    - name: build-image
       params:
-      - name: kind
-        value: task
-      - name: name
-        value: buildah
-      - name: namespace
-        value: openshift-pipelines
-    workspaces:
-    - name: source
-      workspace: my-workspace
-    params:
-    - name: IMAGE
-      value: $(params.IMAGE)
-    - name: TLSVERIFY
-      value: 'false'
-    - name: DOCKERFILE
-      value: 'docker-nexus3/Dockerfile.rh.ubi.java17'
-    - name: CONTEXT
-      value: 'docker-nexus3'
-    runAfter:
-      - git-clone
-  - name: apply-manifests
-    taskRef:
-      name: apply-manifests
-    params:
-    - name: manifest_dir
-      value: yaml
-    workspaces:
-    - name: source
-      workspace: my-workspace
-    runAfter:
-    - build-image
-  - name: update-deployment
-    taskRef:
-      name: update-deployment
-    params:
-    - name: deployment
-      value: $(params.deployment-name)
-    - name: IMAGE
-      value: $(params.IMAGE)
-    runAfter:
-    - apply-manifests
+        - name: IMAGE
+          value: $(params.IMAGE)
+        - name: TLSVERIFY
+          value: 'false'
+        - name: DOCKERFILE
+          value: docker-nexus3/Dockerfile.rh.ubi.java17
+        - name: CONTEXT
+          value: docker-nexus3
+      runAfter:
+        - git-clone
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: buildah
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+      workspaces:
+        - name: source
+          workspace: my-workspace
+    - name: sbom-task
+      runAfter:
+        - build-image
+      params:
+        - name: IMAGE
+          value: $(tasks.build-image.results.IMAGE_URL)
+      taskRef:
+        name: sbom-task
+    - name: apply-manifests
+      params:
+        - name: manifest_dir
+          value: yaml
+      runAfter:
+        - build-image
+      taskRef:
+        kind: Task
+        name: apply-manifests
+      workspaces:
+        - name: source
+          workspace: my-workspace
+    - name: update-deployment
+      params:
+        - name: deployment
+          value: $(params.deployment-name)
+        - name: IMAGE
+          value: $(params.IMAGE)
+      runAfter:
+        - apply-manifests
+      taskRef:
+        kind: Task
+        name: update-deployment
+  workspaces:
+    - name: my-workspace
+  results:
+    - name: IMAGE_URL
+      description: OCI image URL for SBOM lookup
+      value: $(tasks.build-image.results.IMAGE_URL)
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  annotations:
+    task.output.location: results
+    task.results.format: application/text
+    task.results.key: LINK_TO_SBOM
+    task.results.type: external-link
+  name: sbom-task
+spec:
+  params:
+    - description: Container image to generate an SBOM for
+      name: IMAGE
+      type: string
+  results:
+    - description: Contains the SBOM link
+      name: LINK_TO_SBOM
+      type: string
+  volumes:
+    - name: sbom-work
+      emptyDir: {}
+  steps:
+    - name: generate-sbom
+      image: ghcr.io/anchore/syft:latest
+      volumeMounts:
+        - name: sbom-work
+          mountPath: /sbom
+      args:
+        - $(params.IMAGE)
+        - --output
+        - cyclonedx-json=/sbom/sbom-image.json
+    - name: publish-sbom-result
+      computeResources: {}
+      image: registry.redhat.io/ubi10/ubi-minimal:latest
+      volumeMounts:
+        - name: sbom-work
+          mountPath: /sbom
+      script: |
+        #!/bin/sh
+        echo 'BEGIN SBOM'
+        cat /sbom/sbom-image.json
+        echo 'END SBOM'
+        echo "$(params.IMAGE)" | tee $(results.LINK_TO_SBOM.path)
 ---
 apiVersion: tekton.dev/v1
 kind: Task
